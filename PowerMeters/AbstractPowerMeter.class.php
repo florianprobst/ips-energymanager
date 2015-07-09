@@ -15,7 +15,7 @@
  * GNU General Public License, version 3
  */
 
-require_once './IPowerMeter.interface.php';
+require_once 'IPowerMeter.interface.php';
 
 /**
 * abstract class AbstractPowerMeter
@@ -53,14 +53,14 @@ abstract class AbstractPowerMeter implements IPowerMeter{
 	* @const UNKNOWN_MANUFACTURER
   * @access private
 	*/
-	private const UNKNOWN_MANUFACTURER = "UNKNOWN";
+	const UNKNOWN_MANUFACTURER = "UNKNOWN";
 	
 	/**
 	* unknown device manufacturer
 	* @const UNKNOWN_MODEL
   * @access private
 	*/
-	private const UNKNOWN_MODEL = "UNKNOWN";
+	const UNKNOWN_MODEL = "UNKNOWN";
 	
 	/**
 	* Constructor

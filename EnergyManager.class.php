@@ -14,8 +14,8 @@
  * GNU General Public License, version 3
  */
  
-require_once './PowerMeters/IPowerMeter.interface.php';
-require_once './PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
+require_once 'PowerMeters/IPowerMeter.interface.php';
+require_once 'PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
  
 /**
 * class EnergyManager
@@ -42,8 +42,8 @@ class EnergyManager{
 	}
 	
 	public function test(){
-		foreach($powermeters as $p){
-			print_r($p->getCurrentWatts());
+		foreach($this->powermeters as $p){
+			echo "result:" . $p->getCurrentWatts() ."\n";
 		}
 	}
 }

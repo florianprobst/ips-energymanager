@@ -21,7 +21,7 @@
  * GNU General Public License, version 3
  */
 
-require_once './AbstractPowerMeter.class.php';
+require_once 'AbstractPowerMeter.class.php';
 
 /**
 * class HomeMaticPowerMeterHM_ES_PMSw1_Pl
@@ -34,14 +34,14 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @const MANUFACTURER
   * @access private
 	*/
-	private const MANUFACTURER = "HomeMatic";
+	const MANUFACTURER = "HomeMatic";
 	
 	/**
 	* device model
 	* @const MODEL
   * @access private
 	*/
-	private const MODEL = "HM-ES-PMSw1-Pl";
+	const MODEL = "HM-ES-PMSw1-Pl";
 	
 	/**
 	* IPS module Id
@@ -51,7 +51,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @const MODULE_ID
   * @access private
 	*/
-	private const MODULE_ID = "{EE4A81C6-5C90-4DB7-AD2F-F6BBD521412E}";
+	const MODULE_ID = "{EE4A81C6-5C90-4DB7-AD2F-F6BBD521412E}";
 	
 	/**
   * IP-Symcon instance id of the power variable containing
@@ -60,7 +60,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
   * @var float
   * @access private
   */
-	private $varPowerId;
+	private $powerId;
 	
 	/**
   * IP-Symcon instance id of the energy counter variable containing
@@ -69,7 +69,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
   * @var float
   * @access private
   */
-	private $varCounterId;
+	private $counterId;
 	
 	/**
 	* Constructor
@@ -94,13 +94,13 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 		$powerId = IPS_GetObjectIDByIdent('POWER', $this->getInstanceId());
 		if($powerId == false)
 			throw new Exception("There is no 'POWER' variable attached to the device with instanceId '".$this->getInstanceId()."'");
-		$this->varPowerId = $powerId;
+		$this->powerId = $powerId;
 		
 		//second we check if an object with the ObjectIdent "ENERGY_COUNTER" exists
 		$counterId = IPS_GetObjectIDByIdent('ENERGY_COUNTER', $this->getInstanceId());
 		if($counterId == false)
 			throw new Exception("There is no 'ENERGY_COUNTER' variable attached to the device with instanceId '". $this->getInstanceId() ."'");
-		$this->varCounterId = $counterId;
+		$this->counterId = $counterId;
 		
 		//if no exception was thrown everything should be fine.
 	}
