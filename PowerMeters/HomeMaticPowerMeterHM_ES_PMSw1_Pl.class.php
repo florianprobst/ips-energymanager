@@ -8,10 +8,10 @@
  * * Channel 0 - MAINTENANCE:	contains HomeMatic maintenance variables (we dont need them)
  * * Channel 1 - POWERPLUG:		contains status variables of the power plug (we dont need them)
  * * Channel 2 - POWERMETER:	contains power meter variables (that's what we want)
- *														-> variable 'CURRENT' = current consumed at the moment in milliAmps
- *														-> variable 'ENERGY_COUNTER' = consumed watt-hours in total
- *														-> variable 'FREQUENCY' = power frequency in Hz
- *														-> variable 'POWER' = current watt consumption
+ *		-> variable 'CURRENT' = current consumed at the moment in milliAmps
+ *		-> variable 'ENERGY_COUNTER' = consumed watt-hours in total
+ *		-> variable 'FREQUENCY' = power frequency in Hz
+ *		-> variable 'POWER' = current watt consumption
  * 
  * @link https://github.com/florianprobst/ips-energymanager project website
  * 
