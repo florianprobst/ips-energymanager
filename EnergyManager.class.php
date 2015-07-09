@@ -16,6 +16,8 @@
  
 require_once 'PowerMeters/IPowerMeter.interface.php';
 require_once 'PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
+require_once 'VariableManagement/EnergyVariable.class.php';
+require_once 'VariableManagement/EnergyVariableProfile.class.php';
  
 /**
 * class EnergyManager
@@ -31,14 +33,30 @@ class EnergyManager{
   */
 	private $powermeters = array();
 	
+	/**
+	* Constructor
+	* 
+	* @access public
+	*/
 	public function __construct(){
 		
 	}
 	
+	/**
+	* registerPowerMeter
+	* 
+	* @return boolean true if register was successful
+	* @access public
+	*/
 	public function registerPowerMeter($powermeter){
 		if(!($powermeter instanceof IPowerMeter))
 			throw new Exception("Parameter \$powermeter is not of type IPowerMeter");
 		array_push($this->powermeters, $powermeter);
+		return true;
+	}
+	
+	public function createVariableProfiles(){
+		
 	}
 	
 	public function test(){

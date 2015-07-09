@@ -105,7 +105,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 		//if no exception was thrown everything should be fine.
 	}
 	
-		/**
+	/**
 	* getCurrentWatts
 	* 
 	* @return integer current watts consumed at the power meter
