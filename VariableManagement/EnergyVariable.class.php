@@ -16,7 +16,7 @@ require_once('EnergyVariableProfile.php');
 
 /**
 * class EnergyVariable
-* 
+*
 * @uses EnergyVariableProfile
 */
 class EnergyVariable{
@@ -77,7 +77,15 @@ class EnergyVariable{
 	* @var boolean
 	* @access private
 	*/
-	private $debug = false;
+	private $debug;
+
+	/**
+	* instance id of the archive control (usually located in IPS\core)
+	*
+	* @var integer
+	* @access private
+	*/
+	private $archiveId;
 
 	/**
 	* IPS - datatype boolean
@@ -113,15 +121,18 @@ class EnergyVariable{
 	* create the variable in symcon if it does not exist
 	*
 	* @param string $name name of the variable
-	* @param int $type IPS datatype
-	* @param int $parent id of the variables parent, this defines where the variable will be created
+	* @param integer $type IPS datatype
+	* @param integer $parent id of the variables parent, this defines where the variable will be created
 	* @param mixed $value initially set a variable value
 	* @param array $assoc value to format associations
+	* @param boolean $enableLogging enables or disables the ips functionality to log variable changes in a database
+	* @param integer $archiveId instance id of the archive control (usually located in IPS\core)
 	* @param boolean $debug enables / disables debug information
+	*
 	* @throws Exception if the parameter \$profile is not an EnergyVariableProfile datatype
 	* @access public
 	*/
-	public function __construct($name, $type, $parent, $value = NULL, $profile = NULL){
+	public function __construct($name, $type, $parent, $value = NULL, $profile = NULL, $enableLogging = false, $archiveId = NULL, $debug = false){
 		if(isset($profile) && !($profile instanceof EnergyVariableProfile))
 		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile!");
 		$this->name = $name;
@@ -129,6 +140,9 @@ class EnergyVariable{
 		$this->parent = $parent;
 		$this->profile = $profile;
 		$this->value = $value;
+		$this->enableLogging = $enableLogging;
+		$this->archiveId = $archiveId;
+		$this->debug = $debug;
 
 		$this->id = @IPS_GetVariableIDByName($name, $parent);
 		if($this->id == false){
@@ -138,7 +152,32 @@ class EnergyVariable{
 			IPS_SetParent($this->id, $parent);
 			IPS_SetInfo($this->id, "this variable was created by script " . $_IPS['SELF']);
 			IPS_SetVariableCustomProfile($this->id, $profile->name);
+			if ($this->enableLogging) {
+				if($this->archiveId == NULL)
+				throw new Exception("Parameter \$archiveId is not set but \$enableLogging is true");
+				if($this->checkArchive($this->archiveId)){
+					AC_SetLoggingStatus($this->archiveId, $this->id, true);
+					IPS_ApplyChanges($this->archiveId);
+				}
+			}
 		}
+	}
+
+	/**
+	* checks if the instance to $archiveId is a valid IPS archive object
+	*
+	* @param integer $archiveId instance id to be checked
+	* @throws Exception if $archiveId does not match to IPS archive
+	* @return true if id refers to an archive
+	* @access private
+	*/
+	private function checkArchive($archiveId){
+		$archive = @IPS_GetInstance($archiveId);
+		if($archive == NULL)
+		throw new Exception("Archive with instance id $archiveId does not exist");
+		if($archive["ModuleInfo"]["ModuleID"] == "{43192F0B-135B-4CE7-A0A7-1475603F3060}")
+		return true;
+		return false;
 	}
 
 	/**
@@ -165,7 +204,7 @@ class EnergyVariable{
 	/**
 	* returns the variable id
 	*
-	* @return int variable id
+	* @return integer variable id
 	* @access public
 	*/
 	public function getId(){
@@ -229,6 +268,24 @@ class EnergyVariable{
 	*/
 	public function delete(){
 		IPS_DeleteVariable($this->id);
+	}
+
+	/**
+	* average power consumption per month in watt hours
+	*
+	* @param integer $startTimestamp starting time / date as UNIX Timestamp
+	* @param integer $endTimestamp ending time / date as UNIX Timestamp
+	* @param integer $limit max count of data sets (0 = no limit, but there is a hard-coded 10000 records limit which cant be exceeded)
+	* @throws Exception if logging is not enabled for this variable
+	* @return float average power consumption per month in watt hours
+	* @access public
+	*/
+	public function getAverageWattsPerMonth($startTimestamp, $endTimestamp, $limit = 0){
+		if($this->enableLogging == false)
+		throw new Exception("Logging is not enabled for this variable")
+		$values = AC_GetAggregatedValues($this->archiveId, $this->id, 2, $startTimestamp, $endTimestamp, $limit);
+		print_r($values);
+		return $values;
 	}
 }
 ?>

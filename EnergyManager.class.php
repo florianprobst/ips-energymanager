@@ -72,6 +72,14 @@ class EnergyManager{
 	* @access private
 	*/
 	private $variable = array();
+	
+	/**
+	* instance id of the archive control (usually located in IPS\core)
+	*
+	* @var integer
+	* @access private
+	*/
+	private $archiveId;
 
 	/**
 	* IPS - datatype boolean
@@ -105,15 +113,18 @@ class EnergyManager{
 	* Constructor
 	*
 	* @param integer $parentId set the parent object for all items this script creates
+	* @param integer $archiveId instance id of the archive control (usually located in IPS\core)
 	* @param string $prefix the variable name prefix to identify variables and variable profiles created by this script
 	* @param boolean $debug enables / disables debug information
 	* @access public
 	*/
-	public function __construct($parentId, $prefix = "EM_", $debug = false){
+	public function __construct($parentId, $archiveId, $prefix = "EM_", $debug = false){
 		$this->parentId = $parentId;
+		$this->archiveId = $archiveId;
 		$this->debug = $debug;
 		$this->prefix = $prefix;
-		$this->createVariableProfiles();
+		//create variable profiles
+		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $prefix = $this->prefix, $suffix = " Wh", $assoc = NULL, $debug = $this->debug);
 	}
 
 	/**
@@ -128,24 +139,16 @@ class EnergyManager{
 		//add new power meter to list
 		array_push($this->powermeters, $powermeter);
 		//create new variables for new power meter if they do not already exist
-		//todo: enable logging for current watts
-		//array_push($this->variables, new EnergyVariable($this.->prefix . "Current_Watts_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]));
-		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]));
-		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_last_read" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]));
+		array_push($this->variables, new EnergyVariable($this.->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, $this->archiveId, $this->debug);
+		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, $this->archiveId, $this->debug);
+		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_last_read" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, NULL, $this->debug);
 		return true;
 	}
 
-	private function createVariableProfiles(){
-		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $prefix = $this->prefix, $suffix = " Wh", $assoc = NULL, $debug = $this->debug);
-	}
-
-	private function createVariable($name, $type, $parent, $value = NULL, $profile = NULL){
-		
-	}
-
 	public function test(){
-		foreach($this->powermeters as $p){
+		foreach($this->powermeters as &$p){
 			echo "result:" . $p->getCurrentWatts() ."\n";
+			$p->getAverageWattsPerMonth();
 		}
 	}
 }
