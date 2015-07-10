@@ -124,7 +124,7 @@ class EnergyManager{
 		$this->debug = $debug;
 		$this->prefix = $prefix;
 		//create variable profiles
-		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $prefix = $this->prefix, $suffix = " Wh", $assoc = NULL, $debug = $this->debug);
+		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $this->prefix, " Wh", NULL, $this->debug);
 	}
 
 	/**
