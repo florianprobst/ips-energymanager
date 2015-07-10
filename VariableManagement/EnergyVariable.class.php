@@ -86,7 +86,15 @@ class EnergyVariable{
 	* @access private
 	*/
 	private $archiveId;
-
+	
+	/**
+	* enables / disables IPS logging features
+	*
+	* @var boolean
+	* @access private
+	*/
+	private $enableLogging;
+	
 	/**
 	* IPS - datatype boolean
 	* @const tBOOL
@@ -260,6 +268,26 @@ class EnergyVariable{
 	public function getProfile(){
 		return $this->profiles;
 	}
+	
+	/**
+	* returns the archive id
+	*
+	* @return integer archive id
+	* @access public
+	*/
+	public function getArchiveId(){
+		return $this->archiveId;
+	}
+	
+	/**
+	* returns if logging is enabled
+	*
+	* @return boolean enabledLogging
+	* @access public
+	*/
+	public function isLoggingEnabled(){
+		return $this->enabledLogging;
+	}
 
 	/**
 	* deletes the variable in ip-symcon
@@ -268,24 +296,6 @@ class EnergyVariable{
 	*/
 	public function delete(){
 		IPS_DeleteVariable($this->id);
-	}
-
-	/**
-	* average power consumption per month in watt hours
-	*
-	* @param integer $startTimestamp starting time / date as UNIX Timestamp
-	* @param integer $endTimestamp ending time / date as UNIX Timestamp
-	* @param integer $limit max count of data sets (0 = no limit, but there is a hard-coded 10000 records limit which cant be exceeded)
-	* @throws Exception if logging is not enabled for this variable
-	* @return float average power consumption per month in watt hours
-	* @access public
-	*/
-	public function getAverageWattsPerMonth($startTimestamp, $endTimestamp, $limit = 0){
-		if($this->enableLogging == false)
-		throw new Exception("Logging is not enabled for this variable");
-		$values = AC_GetAggregatedValues($this->archiveId, $this->id, 2, $startTimestamp, $endTimestamp, $limit);
-		print_r($values);
-		return $values;
 	}
 }
 ?>

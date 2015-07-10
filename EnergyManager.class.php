@@ -26,7 +26,7 @@ require_once 'VariableManagement/EnergyVariableProfile.class.php';
 */
 class EnergyManager{
 	/**
-	* array of managed power meter devices
+	* array of managed power meter devices and their variables
 	*
 	* @var IPowerMeter
 	* @access private
@@ -65,14 +65,6 @@ class EnergyManager{
 	*/
 	private $variableProfiles = array();
 
-	/**
-	* array of all energymanager variables
-	*
-	* @var EnergyVariable
-	* @access private
-	*/
-	private $variables = array();
-	
 	/**
 	* instance id of the archive control (usually located in IPS\core)
 	*
@@ -124,7 +116,7 @@ class EnergyManager{
 		$this->debug = $debug;
 		$this->prefix = $prefix;
 		//create variable profiles
-		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $this->prefix, " Wh", NULL, $this->debug));
+		array_push($this->variableProfiles, new EnergyVariableProfile($this->prefix . "Watthours", self::tFLOAT, "", " Wh", NULL, $this->debug));
 	}
 
 	/**
@@ -136,19 +128,46 @@ class EnergyManager{
 	public function registerPowerMeter($powermeter){
 		if(!($powermeter instanceof IPowerMeter))
 		throw new Exception("Parameter \$powermeter is not of type IPowerMeter");
-		//add new power meter to list
-		array_push($this->powermeters, $powermeter);
-		//create new variables for new power meter if they do not already exist
-		array_push($this->variables, new EnergyVariable($this->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug));
-		array_push($this->variables, new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug));
-		array_push($this->variables, new EnergyVariable($this->prefix . "Energy_Counter_last_read" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, NULL, $this->debug));
+		
+		//add new power meter to list, create variables and reference them to power meter
+		$tmp = array(
+			"device" => $powermeter,
+			"current_consumption" => new EnergyVariable($this->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug)),
+			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug)),
+			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, NULL, $this->debug))
+		);
+		
+		array_push($this->powermeters, $tmp;
+		
 		return true;
+	}
+	
+	
+	/**
+	* average power consumption per month in watt hours
+	*
+	* @param integer $startTimestamp starting time / date as UNIX Timestamp
+	* @param integer $endTimestamp ending time / date as UNIX Timestamp
+	* @param integer $limit max count of data sets (0 = no limit, but there is a hard-coded 10000 records limit which cant be exceeded)
+	* @throws Exception if logging is not enabled for this variable
+	* @throws Exception if param $variable is not of type EnergyVariable
+	* @return float average power consumption per month in watt hours
+	* @access public
+	*/
+	public function getAverageWattsPerMonth($variable, $startTimestamp, $endTimestamp, $limit = 0){
+		if($variable->isLoggingEnabled() == false)
+		throw new Exception("Logging is not enabled for this variable '".$variable->getName()."'");
+		if(!($variable instanceof EnergyVariable))
+		throw new Exception("Parameter \$variable is not of type EnergyVariable");
+		$values = AC_GetAggregatedValues($variable->getArchiveId(), $variable->getId(), 2, $startTimestamp, $endTimestamp, $limit);
+		print_r($values);
+		return $values;
 	}
 
 	public function test(){
 		foreach($this->powermeters as &$p){
-			echo "result:" . $p->getCurrentWatts() ."\n";
-			$p->getAverageWattsPerMonth();
+			echo "result:" . $p["device"]->getCurrentWatts() ."\n";
+			$this->getAverageWattsPerMonth($p->["current_consumption"], strtotime("1 January 2015"), strtotime("now"));
 		}
 	}
 }
