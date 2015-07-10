@@ -123,16 +123,78 @@ class EnergyVariable{
 	*/
 	const tSTRING = 3;
 
+	public function __construct(){
+		//try to evaluate which constructor fits to the arguments
+		$argv = func_get_args();
+		switch( func_num_args() ) {
+			case 1:
+			if (is_int($argv[0])){
+				//most likely this is the instance id of an existing variable
+				//match construct1
+				self::__construct1($argv);	
+			}
+			break;
+		}
+		if(is_string($argv[0]){
+			//most likely this is the $name parameter for a new variable
+			//but we doublecheck if the second parameter $type is given
+			if($argv[1] == self::tBOOL || $argv[1] == self::tINT || $argv[1] == self::tFLOAT || $argv[1] == self::tSTRING){
+				//datatype given
+				//match construct 2	
+				self::__construct2($argv);
+			} 
+		}
+	}
+	
 	/**
 	* constructor
 	*
-	* create the variable in symcon if it does not exist
+	* first constructor: used to bind an existing device variable to the power meter. 
+	* e.g. the 'POWER' variable for HomeMatic HM-ES-PMSw1-Pl, there is no need to create a new variable, but
+	* it's necessary to enable logging for it and provide a interface for that variable
+	*
+	* @param integer $instanceId instance id of the variable
+	* @param EnergyVariableProfile $profile variable profile for this variable
+	* @param boolean $enableLogging enables or disables the ips functionality to log variable changes in a database
+	* @param integer $archiveId instance id of the archive control (usually located in IPS\core)
+	* @param boolean $debug enables / disables debug information
+	*
+	* @throws Exception if the parameter \$profile is not an EnergyVariableProfile datatype
+	* @access public
+	*/	
+	private function __construct1($instanceId, $profile = NULL, $enableLogging = false; $archiveId = NULL, $debug = false){
+		if(isset($profile) && !($profile instanceof EnergyVariableProfile))
+		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile!");
+		
+		$obj = @IPS_GetObject($instanceId);
+		if($obj == NULL)
+		throw new Exception("Object with id '$instanceId' does not exist)";
+		$this->id = $instanceId;
+		$this->name = $obj["ObjectName"];
+		$this->parent = $obj["ParentID"];
+		
+		$var = IPS_GetVariable($this->instanceId);
+		if($profile->getName() != $var["VariableProfile"]){
+			IPS_SetVariableCustomProfile($this->id, $profile->getName());
+			IPS_SetInfo($this->id, "this variable was edited by script " . $_IPS['SELF'] . " - variable profile was set to '" . $profile->getName() ."'");
+		}
+		$this->profile = $profile;
+		$this->enableLogging = $enableLogging;
+		$this->archiveId = $archiveId;
+		$this->debug = $debug;
+		$this->verifyVariableLogging();
+	}
+	
+	/**
+	* constructor
+	*
+	* second constructor: create the variable in symcon if it does not exist
 	*
 	* @param string $name name of the variable
 	* @param integer $type IPS datatype
 	* @param integer $parent id of the variables parent, this defines where the variable will be created
 	* @param mixed $value initially set a variable value
-	* @param array $assoc value to format associations
+	* @param EnergyVariableProfile $profile variable profile for this variable
 	* @param boolean $enableLogging enables or disables the ips functionality to log variable changes in a database
 	* @param integer $archiveId instance id of the archive control (usually located in IPS\core)
 	* @param boolean $debug enables / disables debug information
@@ -140,18 +202,18 @@ class EnergyVariable{
 	* @throws Exception if the parameter \$profile is not an EnergyVariableProfile datatype
 	* @access public
 	*/
-	public function __construct($name, $type, $parent, $value = NULL, $profile = NULL, $enableLogging = false, $archiveId = NULL, $debug = false){
+	private function __construct2($name, $type, $parent, $profile = NULL, $enableLogging = false, $archiveId = NULL, $debug = false){
 		if(isset($profile) && !($profile instanceof EnergyVariableProfile))
 		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile!");
+		
 		$this->name = $name;
 		$this->type = $type;
 		$this->parent = $parent;
 		$this->profile = $profile;
-		$this->value = $value;
 		$this->enableLogging = $enableLogging;
 		$this->archiveId = $archiveId;
 		$this->debug = $debug;
-
+		
 		$this->id = @IPS_GetVariableIDByName($name, $parent);
 		if($this->id == false){
 			if($this->debug) echo "INFO - create IPS variable $name\n";
@@ -160,14 +222,30 @@ class EnergyVariable{
 			IPS_SetParent($this->id, $parent);
 			IPS_SetInfo($this->id, "this variable was created by script " . $_IPS['SELF']);
 			IPS_SetVariableCustomProfile($this->id, $profile->getName());
-			if ($this->enableLogging) {
+			$this->verifyVariableLogging();
+		}
+	}
+	
+	/**
+	* checks if the variable logging state fits the settings
+	* if not this method will update the variable logging
+	*
+	* @throws Exception if $archiveId is not set while logging is enabled
+	* @access private
+	*/
+	private function verifyVariableLogging(){
+		if ($this->enableLogging) {
 				if($this->archiveId == NULL)
 				throw new Exception("Parameter \$archiveId is not set but \$enableLogging is true");
 				if($this->checkArchive($this->archiveId)){
-					AC_SetLoggingStatus($this->archiveId, $this->id, true);
-					IPS_ApplyChanges($this->archiveId);
+					if(!AC_GetLoggingStatus($this->archiveId, $this->id)){
+						AC_SetLoggingStatus($this->archiveId, $this->id, true);
+						IPS_ApplyChanges($this->archiveId);
+					}
 				}
-			}
+		}
+		else{
+			//todo: disable logging not implemented	
 		}
 	}
 
