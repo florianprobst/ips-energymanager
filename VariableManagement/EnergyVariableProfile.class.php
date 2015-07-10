@@ -157,5 +157,15 @@ class EnergyVariableProfile{
 	public function delete(){
 		IPS_DeleteVariableProfile($this->name);
 	}
+	
+	/**
+	* returns the variable profile name
+	*
+	* @return string profile name
+	* @access public
+	*/
+	public function getName(){
+		return $this->name;
+	}
 }
 ?>

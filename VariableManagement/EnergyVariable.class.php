@@ -12,7 +12,7 @@
 * GNU General Public License, version 3
 */
 
-require_once('EnergyVariableProfile.php');
+require_once('EnergyVariableProfile.class.php');
 
 /**
 * class EnergyVariable
@@ -151,7 +151,7 @@ class EnergyVariable{
 			IPS_SetName($this->id, $name);
 			IPS_SetParent($this->id, $parent);
 			IPS_SetInfo($this->id, "this variable was created by script " . $_IPS['SELF']);
-			IPS_SetVariableCustomProfile($this->id, $profile->name);
+			IPS_SetVariableCustomProfile($this->id, $profile->getName());
 			if ($this->enableLogging) {
 				if($this->archiveId == NULL)
 				throw new Exception("Parameter \$archiveId is not set but \$enableLogging is true");
@@ -282,7 +282,7 @@ class EnergyVariable{
 	*/
 	public function getAverageWattsPerMonth($startTimestamp, $endTimestamp, $limit = 0){
 		if($this->enableLogging == false)
-		throw new Exception("Logging is not enabled for this variable")
+		throw new Exception("Logging is not enabled for this variable");
 		$values = AC_GetAggregatedValues($this->archiveId, $this->id, 2, $startTimestamp, $endTimestamp, $limit);
 		print_r($values);
 		return $values;

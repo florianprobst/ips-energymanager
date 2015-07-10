@@ -71,7 +71,7 @@ class EnergyManager{
 	* @var EnergyVariable
 	* @access private
 	*/
-	private $variable = array();
+	private $variables = array();
 	
 	/**
 	* instance id of the archive control (usually located in IPS\core)
@@ -124,7 +124,7 @@ class EnergyManager{
 		$this->debug = $debug;
 		$this->prefix = $prefix;
 		//create variable profiles
-		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $this->prefix, " Wh", NULL, $this->debug);
+		array_push($this->variableProfiles, new EnergyVariableProfile("Watthours", self::tFLOAT, $this->prefix, " Wh", NULL, $this->debug));
 	}
 
 	/**
@@ -139,9 +139,9 @@ class EnergyManager{
 		//add new power meter to list
 		array_push($this->powermeters, $powermeter);
 		//create new variables for new power meter if they do not already exist
-		array_push($this->variables, new EnergyVariable($this.->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, $this->archiveId, $this->debug);
-		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, $this->archiveId, $this->debug);
-		array_push($this->variables, new EnergyVariable($this.->prefix . "Energy_Counter_last_read" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentid, NULL, $this->createVariableProfiles[0]), false, NULL, $this->debug);
+		array_push($this->variables, new EnergyVariable($this->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug));
+		array_push($this->variables, new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug));
+		array_push($this->variables, new EnergyVariable($this->prefix . "Energy_Counter_last_read" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, NULL, $this->debug));
 		return true;
 	}
 
