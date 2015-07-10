@@ -144,5 +144,21 @@ abstract class AbstractPowerMeter implements IPowerMeter{
 	public function setDeviceModel($model){
 		$this->model = $model;
 	}
+	
+	/**
+	* getEnergyCounterInstanceId
+	* 
+	* @return integer instance id of the energy counter variable
+	* @access public
+	*/
+	abstract function getEnergyCounterInstanceId();
+	
+	/**
+	* getCurrentConsumptionInstanceId
+	* 
+	* @return integer instance id of the current consumption variable
+	* @access public
+	*/
+	abstract function getCurrentConsumptionInstanceId();
 }
 ?>

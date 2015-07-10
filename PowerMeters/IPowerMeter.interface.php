@@ -72,5 +72,21 @@ interface IPowerMeter{
 	* @access public
 	*/
 	public function setDeviceModel($model);
+	
+	/**
+	* getEnergyCounterInstanceId
+	* 
+	* @return integer instance id of the energy counter variable
+	* @access public
+	*/
+	public function getEnergyCounterInstanceId();
+	
+	/**
+	* getCurrentConsumptionInstanceId
+	* 
+	* @return integer instance id of the current consumption variable
+	* @access public
+	*/
+	public function getCurrentConsumptionInstanceId();
 }
 ?>

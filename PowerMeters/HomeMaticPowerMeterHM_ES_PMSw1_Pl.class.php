@@ -124,5 +124,26 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	public function getEnergyCounterWattHours(){
 		return GetValue($this->counterId);
 	}
+	
+		
+	/**
+	* getEnergyCounterInstanceId
+	* 
+	* @return integer instance id of the energy counter variable
+	* @access public
+	*/
+	public function getEnergyCounterInstanceId(){
+		return $this->powerId;
+	}
+	
+	/**
+	* getCurrentConsumptionInstanceId
+	* 
+	* @return integer instance id of the current consumption variable
+	* @access public
+	*/
+	public function getCurrentConsumptionInstanceId(){
+		return this->counterId;
+	}
 }
 ?>
