@@ -132,12 +132,12 @@ class EnergyManager{
 		//add new power meter to list, create variables and reference them to power meter
 		$tmp = array(
 			"device" => $powermeter,
-			"current_consumption" => new EnergyVariable($this->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug)),
-			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug)),
-			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, NULL, $this->debug))
+			"current_consumption" => new EnergyVariable($this->prefix . "Current_Consumption_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug),
+			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, $this->archiveId, $this->debug),
+			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, NULL, $this->variableProfiles[0], false, NULL, $this->debug)
 		);
 		
-		array_push($this->powermeters, $tmp;
+		array_push($this->powermeters, $tmp);
 		
 		return true;
 	}
@@ -167,7 +167,7 @@ class EnergyManager{
 	public function test(){
 		foreach($this->powermeters as &$p){
 			echo "result:" . $p["device"]->getCurrentWatts() ."\n";
-			$this->getAverageWattsPerMonth($p->["current_consumption"], strtotime("1 January 2015"), strtotime("now"));
+			$this->getAverageWattsPerMonth($p["current_consumption"], strtotime("1 January 2015"), strtotime("now"));
 		}
 	}
 }
