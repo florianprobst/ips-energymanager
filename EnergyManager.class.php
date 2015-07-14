@@ -72,6 +72,15 @@ class EnergyManager{
 	* @access private
 	*/
 	private $archiveId;
+	
+	
+	/**
+	* pricing of 1 kWh
+	*
+	* @var float
+	* @access private
+	*/
+	private $price_per_kwh;
 
 	/**
 	* IPS - datatype boolean
@@ -110,9 +119,10 @@ class EnergyManager{
 	* @param boolean $debug enables / disables debug information
 	* @access public
 	*/
-	public function __construct($parentId, $archiveId, $prefix = "EM_", $debug = false){
+	public function __construct($parentId, $archiveId, $price_per_kwh, $prefix = "EM_", $debug = false){
 		$this->parentId = $parentId;
 		$this->archiveId = $archiveId;
+		$this->price_per_kwh = $price_per_kwh;
 		$this->debug = $debug;
 		$this->prefix = $prefix;
 		//create variable profiles
@@ -134,7 +144,8 @@ class EnergyManager{
 			"device" => $powermeter,
 			"current_consumption" => new EnergyVariable($powermeter->getCurrentConsumptionInstanceId(), $this->variableProfiles[0], true, $this->archiveId, $this->debug),
 			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, $this->archiveId, $this->debug),
-			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug)
+			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug),
+			"statistics" => new EnergyVariable($this->prefix, "Energy_statistics_" . $powermeter->getInstanceId(), self::tSTRING, $this->parentId, "~HTMLBox", false, NULL, $this->debug)
 		);
 		
 		array_push($this->powermeters, $tmp);
