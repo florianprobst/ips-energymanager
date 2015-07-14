@@ -143,7 +143,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @access public
 	*/
 	public function getCurrentConsumptionInstanceId(){
-		return this->counterId;
+		return $this->counterId;
 	}
 }
 ?>

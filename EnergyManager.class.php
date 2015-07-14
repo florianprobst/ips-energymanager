@@ -132,7 +132,7 @@ class EnergyManager{
 		//add new power meter to list, create variables and reference them to power meter		
 		$tmp = array(
 			"device" => $powermeter,
-			"current_consumption" => new EnergyVariable($powermeter->getCurrentConsumptionInstanceId(), $this->variableProfiles[0], $this->enableLogging; $this->archiveId, $this->debug),
+			"current_consumption" => new EnergyVariable($powermeter->getCurrentConsumptionInstanceId(), $this->variableProfiles[0], true, $this->archiveId, $this->debug),
 			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, $this->archiveId, $this->debug),
 			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug)
 		);
@@ -141,7 +141,6 @@ class EnergyManager{
 		
 		return true;
 	}
-	
 	
 	/**
 	* average power consumption per month in watt hours
@@ -155,19 +154,25 @@ class EnergyManager{
 	* @access public
 	*/
 	public function getAverageWattsPerMonth($variable, $startTimestamp, $endTimestamp, $limit = 0){
-		if($variable->isLoggingEnabled() == false)
-		throw new Exception("Logging is not enabled for this variable '".$variable->getName()."'");
 		if(!($variable instanceof EnergyVariable))
 		throw new Exception("Parameter \$variable is not of type EnergyVariable");
+		if($variable->isLoggingEnabled() == false)
+		throw new Exception("Logging is not enabled for this variable '".$variable->getName()."'");
 		$values = AC_GetAggregatedValues($variable->getArchiveId(), $variable->getId(), 2, $startTimestamp, $endTimestamp, $limit);
-		print_r($values);
-		return $values;
+		if($this->debug){
+			echo "EnergyManager->getAverageWattsPerMonth() print aggregated values: \n";
+			print_r($values);
+			echo "end aggregated values\n";
+			echo "return average result: " . $values[0]["Avg"];
+		}
+		return round($values[0]["Avg"],2);
 	}
 
 	public function test(){
 		foreach($this->powermeters as &$p){
-			echo "result:" . $p["device"]->getCurrentWatts() ."\n";
-			$this->getAverageWattsPerMonth($p["current_consumption"], strtotime("1 January 2015"), strtotime("now"));
+			$avgwatts = $this->getAverageWattsPerMonth($p["current_consumption"], strtotime("1 January 2015"), strtotime("now"));
+			echo "current watts =" . $p["device"]->getCurrentWatts() ."\n";
+			echo "average watts = $avgwatts\n";
 		}
 	}
 }

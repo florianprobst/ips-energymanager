@@ -125,23 +125,66 @@ class EnergyVariable{
 
 	public function __construct(){
 		//try to evaluate which constructor fits to the arguments
-		$argv = func_get_args();
-		switch( func_num_args() ) {
-			case 1:
-			if (is_int($argv[0])){
-				//most likely this is the instance id of an existing variable
-				//match construct1
-				self::__construct1($argv);	
+		$argv = func_get_args(); //func_num_args()
+		if (is_int($argv[0])){
+			//most likely this is the instance id of an existing variable
+			//match construct1
+			
+			$instanceId = $argv[0];
+			if(isset($argv[1])){
+				$profile = $argv[1];
+			}else{
+				$profile = NULL;
 			}
-			break;
+			if(isset($argv[2])){
+				$enableLogging = $argv[2];
+			}else{
+				$enableLogging = false;
+			}
+			if(isset($argv[3])){
+				$archiveId = $argv[3];
+			}else{
+				$archiveId = NULL;
+			}
+			if(isset($argv[4])){
+				$debug = $argv[4];
+			}else{
+				$debug = false;
+			}
+			self::__construct1($instanceId, $profile, $enableLogging, $archiveId, $debug);
 		}
-		if(is_string($argv[0]){
+		
+		if(is_string($argv[0])){
 			//most likely this is the $name parameter for a new variable
 			//but we doublecheck if the second parameter $type is given
 			if($argv[1] == self::tBOOL || $argv[1] == self::tINT || $argv[1] == self::tFLOAT || $argv[1] == self::tSTRING){
 				//datatype given
 				//match construct 2	
-				self::__construct2($argv);
+				
+				$name = $argv[0];
+				$type = $argv[1];
+				$parent = $argv[2];
+				if(isset($argv[3])){
+					$profiles = $argv[3];
+				}else{
+					$profiles = NULL;
+				}
+				if(isset($argv[4])){
+					$enableLogging = $argv[4];
+				}else{
+					$enableLogging = false;
+				}
+				if(isset($argv[5])){
+					$archiveId = $argv[5];
+				}else{
+					$archiveId = NULL;
+				}
+				if(isset($argv[6])){
+					$debug = $argv[6];
+				}else{
+					$debug = false;
+				}
+				self::__construct2($name, $type, $parent, $profiles, $enableLogging, $archiveId, $debug);
 			} 
 		}
 	}
@@ -162,18 +205,20 @@ class EnergyVariable{
 	* @throws Exception if the parameter \$profile is not an EnergyVariableProfile datatype
 	* @access public
 	*/	
-	private function __construct1($instanceId, $profile = NULL, $enableLogging = false; $archiveId = NULL, $debug = false){
+	private function __construct1($instanceId, $profile = NULL, $enableLogging = false, $archiveId = NULL, $debug = false){
 		if(isset($profile) && !($profile instanceof EnergyVariableProfile))
 		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile!");
 		
+		//if($debug) echo "Parameter \$enableLogging = $enableLogging\n";
+		
 		$obj = @IPS_GetObject($instanceId);
 		if($obj == NULL)
-		throw new Exception("Object with id '$instanceId' does not exist)";
+		throw new Exception("Object with id '$instanceId' does not exist");
 		$this->id = $instanceId;
 		$this->name = $obj["ObjectName"];
 		$this->parent = $obj["ParentID"];
 		
-		$var = IPS_GetVariable($this->instanceId);
+		$var = IPS_GetVariable($this->id);
 		if($profile->getName() != $var["VariableProfile"]){
 			IPS_SetVariableCustomProfile($this->id, $profile->getName());
 			IPS_SetInfo($this->id, "this variable was edited by script " . $_IPS['SELF'] . " - variable profile was set to '" . $profile->getName() ."'");
@@ -360,11 +405,11 @@ class EnergyVariable{
 	/**
 	* returns if logging is enabled
 	*
-	* @return boolean enabledLogging
+	* @return boolean enableLogging
 	* @access public
 	*/
 	public function isLoggingEnabled(){
-		return $this->enabledLogging;
+		return $this->enableLogging;
 	}
 
 	/**
