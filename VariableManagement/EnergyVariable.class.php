@@ -249,7 +249,7 @@ class EnergyVariable{
 	*/
 	private function __construct2($name, $type, $parent, $profile = NULL, $enableLogging = false, $archiveId = NULL, $debug = false){
 		if(isset($profile) && !($profile instanceof EnergyVariableProfile))
-		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile!");
+		throw new Exception("Parameter \$profile must be an instance of EnergyVariableProfile! \$name of the variable is '$name'");
 		
 		$this->name = $name;
 		$this->type = $type;

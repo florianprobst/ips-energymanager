@@ -13,6 +13,10 @@
  *		-> variable 'FREQUENCY' = power frequency in Hz
  *		-> variable 'POWER' = current watt consumption
  * 
+ * The power meter name of this model will be read from the power plug since it's most likely
+ * that the IPS user names the power plug according to the device he wants to switch on or of.
+ * This class searches for the channel 1 device using the unique homematic power meter serial number.
+ *
  * @link https://github.com/florianprobst/ips-energymanager project website
  * 
  * @author Florian Probst <florian.probst@gmx.de>
@@ -54,6 +58,39 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	const MODULE_ID = "{EE4A81C6-5C90-4DB7-AD2F-F6BBD521412E}";
 	
 	/**
+  * HomeMatic unique serial number / id without channel
+  *
+  * @var string
+  * @access private
+  */
+	private $address;
+	
+	
+	/**
+  * HomeMatic address channel
+  *
+  * @const integer
+  * @access private
+  */
+	const CHANNEL = 2;
+	
+	/**
+  * HomeMatic power plug device instance id of this power meter
+  *
+  * @var int
+  * @access private
+  */
+	private $plugId;
+	
+	/**
+  * HomeMatic address channel of the plug device
+  *
+  * @const integer
+  * @access private
+  */
+	const PLUG_CHANNEL = 1;
+	
+	/**
   * IP-Symcon instance id of the power variable containing
   * the current watt consumption
   *
@@ -77,6 +114,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @param int $powermeterInstanceId IP-Symcon instance id of the power meter device (in this case channel 2 of the device)
 	* @throws Exception if the parameter \$powermeterInstanceId is not of type 'integer'
 	* @throws Exception if the devices ModuleID is not a HomeMatic Device ModuleID'
+	* @throws Exception if there was no power plug device for this power meter found
 	* @return HomeMaticPowerMeterHM_ES_PMSw1_Pl|null the object or null if an error occured
 	* @access public
 	*/
@@ -102,7 +140,37 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 			throw new Exception("There is no 'ENERGY_COUNTER' variable attached to the device with instanceId '". $this->getInstanceId() ."'");
 		$this->counterId = $counterId;
 		
+		//try to find channel 1 of this device using the unique homematic power meter serial number.
+		//we need this to find the name of the power plug which will be the name/description of this power meter device
+		$tmpAddress = $this->getAddress($this->instanceId);
+		$this->address = substr($tmpAddress,0,strlen($tmpAddress)-2);
+		$hm_instances = IPS_GetInstanceListByModuleID (self::MODULE_ID);
+		$this->plugId = false;
+		foreach($hm_instances as $hm_instance){
+			if($this->address . ":" . self::PLUG_CHANNEL == $this->getAddress($hm_instance)){
+				$this->plugId = $hm_instance;
+				break;
+			}
+		}
+		if($this->plugId == false)
+			throw new Exception("There was no power plug device instance for this power meter device (instance: " . $this->instanceId .") found! Please check if the device does exist in IPS console");
+		//set the power plug's name for this device
+		$this->name = IPS_GetName($this->plugId);
+		
 		//if no exception was thrown everything should be fine.
+	}
+	
+	/**
+	* getAddress
+	* 
+	* @param int $instanceId the instance id of the homematic device
+	* @return string unique homematic address / serial number / id + channel
+	* @access private
+	*/
+	private function getAddress($instanceId){
+		$conf = IPS_GetConfiguration($instanceId);
+		$json = json_decode($conf, true);
+		return $json["Address"];
 	}
 	
 	/**
@@ -133,7 +201,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @access public
 	*/
 	public function getEnergyCounterInstanceId(){
-		return $this->powerId;
+		return $this->counterId;
 	}
 	
 	/**
@@ -143,7 +211,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @access public
 	*/
 	public function getCurrentConsumptionInstanceId(){
-		return $this->counterId;
+		return $this->powerId;
 	}
 }
 ?>

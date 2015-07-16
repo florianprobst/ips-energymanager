@@ -26,6 +26,14 @@ interface IPowerMeter{
 	public function getInstanceId();
 	
 	/**
+	* getName
+	* 
+	* @return string name / description of the power meter
+	* @access public
+	*/
+	public function getName();
+	
+	/**
 	* getCurrentWatts
 	* 
 	* @return integer current watt consumed at the power meter

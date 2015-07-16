@@ -28,9 +28,17 @@ abstract class AbstractPowerMeter implements IPowerMeter{
   * IP-Symcon instance id of the power meter device
   *
   * @var int
-  * @access private
+  * @access protected
   */
-	private $instanceId;
+	protected $instanceId;
+	
+	/**
+  * power meter name
+  *
+  * @var string
+  * @access protected
+  */
+	protected $name;
 	
 	/**
   * power meter device manufacturer
@@ -70,10 +78,11 @@ abstract class AbstractPowerMeter implements IPowerMeter{
 	* @return AbstractPowerMeter|null the object or null if an error occured
 	* @access public
 	*/
-	public function __construct($instanceId, $manufacturer = self::UNKNOWN_MANUFACTURER, $model = self::UNKNOWN_MODEL){
+	public function __construct($instanceId, $name, $manufacturer = self::UNKNOWN_MANUFACTURER, $model = self::UNKNOWN_MODEL){
 		if(!is_int($instanceId))
 			throw new Exception("Parameter \$instanceId is not of type 'integer'.");
 		$this->instanceId = $instanceId;
+		$this->name = $name;
 		$this->setDeviceManufacturer($manufacturer);
 		$this->setDeviceModel($model);
 	}
@@ -86,6 +95,16 @@ abstract class AbstractPowerMeter implements IPowerMeter{
 	*/
 	public function getInstanceId(){
 		return $this->instanceId;
+	}
+	
+	/**
+	* getName
+	* 
+	* @return string name / description of the power meter
+	* @access public
+	*/
+	public function getName(){
+		return $this->name;
 	}
 	
 	/**
