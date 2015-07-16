@@ -73,7 +73,6 @@ class EnergyManager{
 	*/
 	private $archiveId;
 	
-	
 	/**
 	* pricing of 1 kWh
 	*
@@ -81,6 +80,15 @@ class EnergyManager{
 	* @access private
 	*/
 	private $price_per_kwh;
+	
+	/**
+	* statistics variable: contains html to present the statistics and data from all power meters
+	* handled by this class
+	*
+	* @var EnergyVariable
+	* @access private
+	*/
+	private $statistics;
 
 	/**
 	* IPS - datatype boolean
@@ -128,6 +136,7 @@ class EnergyManager{
 		//create variable profiles
 		array_push($this->variableProfiles, new EnergyVariableProfile($this->prefix . "Watthours", self::tFLOAT, "", " Wh", NULL, $this->debug));
 		array_push($this->variableProfiles, new EnergyVariableProfile("~HTMLBox", self::tFLOAT, "", "", NULL, $this->debug));
+		$this->statistics = new EnergyVariable($this->prefix . "Statistics", self::tSTRING, $this->parentId, $this->variableProfiles[1], false, NULL, $this->debug);
 	}
 
 	/**
@@ -145,13 +154,22 @@ class EnergyManager{
 			"device" => $powermeter,
 			"current_consumption" => new EnergyVariable($powermeter->getCurrentConsumptionInstanceId(), $this->variableProfiles[0], true, $this->archiveId, $this->debug),
 			"energy_counter" =>new EnergyVariable($this->prefix . "Energy_Counter_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, $this->archiveId, $this->debug),
-			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug),
-			"statistics" => new EnergyVariable($this->prefix . "Energy_statistics_" . $powermeter->getInstanceId(), self::tSTRING, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug)
+			"energy_counter_last_read" => new EnergyVariable($this->prefix . "Energy_Counter_last_read_" . $powermeter->getInstanceId(), self::tFLOAT, $this->parentId, $this->variableProfiles[0], false, NULL, $this->debug)
 		);
 		
 		array_push($this->powermeters, $tmp);
 		
 		return true;
+	}
+	
+	/**
+	* returns all power meters registered with this class
+	*
+	* @return array containing all power meters
+	* @access public
+	*/
+	public function getPowerMeters(){
+		return $this->powermeters;
 	}
 	
 	/**
@@ -230,18 +248,146 @@ class EnergyManager{
 	public function getCostsPerYear($watts){
 		return round(($watts / 1000) * $this->price_per_kwh * 24 * 365, 2);
 	}
-
-	public function test(){
+	
+	/**
+	* collects all power meters counters and stores them in the energy manager variables
+	* since some products do erase the counter value to 0 as soon as they lose power
+	* we need to store the value in separate ips variables.
+	*
+	* @access public
+	*/
+	public function update(){
 		foreach($this->powermeters as &$p){
-			$avgwatts_lastmonth = $this->getAverageWattsByLastMonth($p["current_consumption"]);
-			$avgwatts_lastyear = $this->getAverageWattsByLastYear($p["current_consumption"]);
-			$current_watts = $p["device"]->getCurrentWatts();
-			echo "Name: " . $p["device"]->getName() . " \n";
-			echo "current watts = " . $current_watts ." which means following costs: " . $this->getCostsPerMonth($current_watts) . " EUR per Month and " . $this->getCostsPerYear($current_watts) ." EUR per Year \n";
-			echo "average watts based on last month = " . $avgwatts_lastmonth ." which means following costs: " . $this->getCostsPerMonth($avgwatts_lastmonth) . " EUR per Month and " . $this->getCostsPerYear($avgwatts_lastmonth) ." EUR per Year \n";
-			echo "average watts based on last year = " . $avgwatts_lastyear ." which means following costs: " . $this->getCostsPerMonth($avgwatts_lastyear) . " EUR per Month and " . $this->getCostsPerYear($avgwatts_lastyear) ." EUR per Year \n";
+			//current counter value from power meter (warning: depending on manufacturer / model this value
+			//can be resetted to 0 when the device was disconnected.
+			$current = $p["device"]->getEnergyCounterWattHours();
 			
+			//last read value stored to ips
+			$last = $p["energy_counter_last_read"]->getValue();
+			
+			//the energy counter value we want to have
+			$counter = $p["energy_counter"]->getValue();
+			
+			if($current < $last){
+				//counter was reset (maybe power failure)
+				$last = 0;
+			}
+			
+			//calculate incremental value between last counter read and current counter read
+			$increment = $current - $last;
+			
+			//add increment to the counter
+			$counter += $increment;
+			
+			//save last read value to ips variable
+			$p["energy_counter_last_read"]->setValue($current);
+			
+			//save counter value to ips variable
+			$counter = $p["energy_counter"]->setValue($counter);
 		}
+		
+		//now we have to create the statistics
+		$this->statistics->setValue($this->createHTML());
+	}
+	
+	/**
+	* creates an html string containing the statistics table for all power meters
+	*
+	* @access private
+	*/
+	private function createHTML(){
+		$doc = new DOMDocument();
+		
+		$html = "<html><head></head>";
+			$html .= "<style>";
+				$html .= "#em_table, #em_table tr, #em_table td { border: 1px solid black; border-collapse: collapse; }";
+				$html .= "#em_thead { font-size: 14px; font-weight: normal }";
+				$html .= "#em_tbody { font-size: 12px }"; 
+				$html .= "#em_p { font-size: 10px }";
+			$html .= "</style>";
+			$html .= "<body>";
+				$html .= "<table id='em_table' width='100%'>";
+					$html .= "<thead id='em_thead'><tr>";
+						$html .= "<td width='25%' rowspan='3'>";
+							$html .= "Ger&auml;t";
+						$html .= "</td>";
+						$html .= "<td width='10%' rowspan='3'>";
+							$html .= "Aktueller Verbrauch in Watt";
+						$html .= "</td>";
+						$html .= "<td width='10%' rowspan='3'>";
+							$html .= "Z&auml;hlerstand in Kilowatt";
+						$html .= "</td>";
+							$html .= "<td width='55%' colspan='4'>";
+								$html .= "Durchschnittsverbauch und Kosten je Monat";
+							$html .= "</td>";
+						$html .= "</tr>";
+						$html .= "<tr>";
+							$html .= "<td colspan='2'>";
+								$html .= "der letzten 30 Tage";
+							$html .= "</td>";
+							$html .= "<td colspan='2'>";
+								$html .= "der letzten 365 Tage";
+							$html .= "</td>";
+							$html .= "</tr>";
+							$html .= "<tr>";
+							$html .= "<td>";
+								$html .= "Watt";
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= "Kosten";
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= "Watt";
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= "Kosten";
+							$html .= "</td>";
+						$html .= "</tr></thead><tbody id='em_tbody'>";
+						//start daten
+						$total_costs_last_year = 0;
+						foreach($this->powermeters as &$p){
+							$name =  $p["device"]->getName();
+							$current_watts = $p["device"]->getCurrentWatts();
+							$counter = round($p["energy_counter"]->getValue() / 1000,2);
+							$avgwatts_lastmonth = $this->getAverageWattsByLastMonth($p["current_consumption"]);
+							$avgwatts_lastyear = $this->getAverageWattsByLastYear($p["current_consumption"]);
+							$costs1 = $this->getCostsPerMonth($avgwatts_lastmonth);
+							$costs2 = $this->getCostsPerMonth($avgwatts_lastyear);
+							$total_costs_last_year += $costs2;
+							
+						$html .= "<tr>";
+							$html .= "<td>";
+								$html .= $name;
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $current_watts;
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $counter;
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $avgwatts_lastmonth;
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $costs1 . " &euro;";
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $avgwatts_lastyear;
+							$html .= "</td>";
+							$html .= "<td>";
+								$html .= $costs2 . " &euro;";
+							$html .= "</td>";
+						$html .= "</tr>";
+						}
+						//end daten
+				$html .= "</tbody></table>";
+				$html .= "<p id='em_p'>Insgesamt belaufen sich die Kosten aller &uuml;berwachten Ger&auml;te auf: <b>" . $total_costs_last_year * 12 . " &euro; im Jahr</b> (Basis ist der Durschnittsverbrauch der letzten 365 Tage)</p>";
+			$html .= "</body>";
+		$html .= "</html>";
+		
+		$doc->loadHTML($html);
+		$val = $doc->saveHTML();
+		return $val;
 	}
 }
 ?>

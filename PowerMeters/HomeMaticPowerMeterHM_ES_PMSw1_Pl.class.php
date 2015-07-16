@@ -119,7 +119,7 @@ class HomeMaticPowerMeterHM_ES_PMSw1_Pl extends AbstractPowerMeter{
 	* @access public
 	*/
 	public function __construct($powermeterInstanceId){
-		parent::__construct($powermeterInstanceId, self::MANUFACTURER, self::MODEL);
+		parent::__construct($powermeterInstanceId, "UNDEFINED", self::MANUFACTURER, self::MODEL);
 		
 		//check if it's the correct powermeterInstanceId
 		

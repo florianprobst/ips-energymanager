@@ -318,7 +318,7 @@ class EnergyVariable{
 	* @return true if value was set successful
 	* @access public
 	*/
-	public function set($value){
+	public function setValue($value){
 		if($this->type == self::tBOOL && !is_bool($value))
 		throw new Exception("(Variable ". $this->name .")Param 'value' is not a boolean.");
 		if($this->type == self::tINT && !is_int($value))
@@ -351,7 +351,7 @@ class EnergyVariable{
 	public function getValue(){
 		return GetValue($this->id);
 	}
-
+	
 	/**
 	* returns the variable name
 	*
