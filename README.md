@@ -93,3 +93,7 @@ $energymanager->update();
 Die Zählerstände sind aus zwei Gründen separat in Skripteigenen Variablen gespeichert:
 * Einheitliche Syntax: unabhängig vom Fabrikat werden immer die Zählerstände aller angebundenen Geräte in gleich lautenden Variablen und in dem gleichen Format / Einheit gespeichert.
 * Wie im Fall des HomeMatic Zählers wird der Zählerstand des Gerätes bei einem Stromausfall auf 0 zurück gesetzt. Durch die separate Speicherung in eigenen Variablen kann das vermieden werden.
+
+##Screenshots
+![auswertung](assets/screenshot_v091_em_statistics.png)
+![ips variables](assets/screenshot_v091_em_console_structure.png)
