@@ -18,6 +18,7 @@ require_once 'PowerMeters/IPowerMeter.interface.php';
 require_once 'PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
 require_once 'VariableManagement/EnergyVariable.class.php';
 require_once 'VariableManagement/EnergyVariableProfile.class.php';
+require_once 'Devices/IDevice.interface.php';
 
 /**
 * class EnergyManager
@@ -80,7 +81,7 @@ class EnergyManager{
 	* @access private
 	*/
 	private $price_per_kwh;
-	
+		
 	/**
 	* statistics variable: contains html to present the statistics and data from all power meters
 	* handled by this class
