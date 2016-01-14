@@ -18,6 +18,8 @@ require_once 'PowerMeters/IPowerMeter.interface.php';
 require_once 'PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
 require_once 'ips-library/IPSVariable.class.php';
 require_once 'ips-library/IPSVariableProfile.class.php';
+require_once.'ips-library/IPSScript.class.php';
+require_once.'ips-library/IPSTimerEvent.class.php';
 require_once 'Devices/IDevice.interface.php';
 
 /**
@@ -26,6 +28,14 @@ require_once 'Devices/IDevice.interface.php';
 * @uses IPowerMeter as power meter interface
 */
 class EnergyManager{
+	/**
+	* config script id for EnergyManager
+	*
+	* @var integer
+	* @access private
+	*/
+	private $configId;
+	
 	/**
 	* array of managed power meter devices and their variables
 	*
@@ -65,7 +75,15 @@ class EnergyManager{
 	* @access private
 	*/
 	private $variableProfiles = array();
-
+	
+	/**
+	* array of all scripts created by EnergyManager
+	*
+	* @var scripts
+	* @access private
+	*/
+	private $scripts = array();
+	
 	/**
 	* instance id of the archive control (usually located in IPS\core)
 	*
@@ -73,6 +91,14 @@ class EnergyManager{
 	* @access private
 	*/
 	private $archiveId;
+	
+	/**
+	* interval of status update checks
+	*
+	* @var IPSVariable
+	* @access private
+	*/
+	private $update_interval;
 	
 	/**
 	* pricing of 1 kWh
@@ -124,22 +150,50 @@ class EnergyManager{
 	*
 	* @param integer $parentId set the parent object for all items this script creates
 	* @param integer $archiveId instance id of the archive control (usually located in IPS\core)
+	* @param integer $update_interval interval of status updates in seconds
 	* @param string $prefix the variable name prefix to identify variables and variable profiles created by this script
 	* @param boolean $debug enables / disables debug information
 	* @access public
 	*/
-	public function __construct($parentId, $archiveId, $price_per_kwh, $prefix = "EM_", $debug = false){
+	public function __construct($configId, $parentId, $archiveId, $price_per_kwh, $update_interval, $prefix = "EM_", $debug = false){
+		$this->configId = $configId;
 		$this->parentId = $parentId;
 		$this->archiveId = $archiveId;
+		$this->update_interval = $update_interval;
 		$this->price_per_kwh = $price_per_kwh;
 		$this->debug = $debug;
 		$this->prefix = $prefix;
+		
 		//create variable profiles
 		array_push($this->variableProfiles, new IPSVariableProfile($this->prefix . "Watthours", self::tFLOAT, "", " Wh", NULL, $this->debug));
 		array_push($this->variableProfiles, new IPSVariableProfile("~HTMLBox", self::tFLOAT, "", "", NULL, $this->debug));
 		$this->statistics = new IPSVariable($this->prefix . "Statistics", self::tSTRING, $this->parentId, $this->variableProfiles[1], false, NULL, 0, $this->debug);
+		
+		//create scripts
+		//script contents
+		$script_includes = '<?require_once(IPS_GetScript('. $this->configId . ')["ScriptFile"]);';
+		$script_update_status = $script_includes . '$energymanager->update();?>';
+		array_push($this->scripts, new IPSScript($this->parentId, $this->prefix . "update_status", $script_update_status, $this->debug));
+		
+		//create events
+		array_push($this->events, new IPSTimerEvent($this->getScriptByName("update_status")->getInstanceId(), $this->prefix ."check_update_status", $this->update_interval, $this->debug));
 	}
-
+	
+	/**
+	* getScriptByName
+	*
+	* @return LightControlScript if found else false
+	* @access private
+	*/
+	private function getScriptByName($name){
+		foreach($this->scripts as &$s){
+			if($s->getName() == $this->prefix . $name){
+				return $s;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	* registerPowerMeter
 	*
