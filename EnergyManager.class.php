@@ -18,8 +18,8 @@ require_once 'PowerMeters/IPowerMeter.interface.php';
 require_once 'PowerMeters/HomeMaticPowerMeterHM_ES_PMSw1_Pl.class.php';
 require_once 'ips-library/IPSVariable.class.php';
 require_once 'ips-library/IPSVariableProfile.class.php';
-require_once.'ips-library/IPSScript.class.php';
-require_once.'ips-library/IPSTimerEvent.class.php';
+require_once 'ips-library/IPSScript.class.php';
+require_once 'ips-library/IPSTimerEvent.class.php';
 require_once 'Devices/IDevice.interface.php';
 
 /**
@@ -83,6 +83,14 @@ class EnergyManager{
 	* @access private
 	*/
 	private $scripts = array();
+	
+	/**
+	* array of all events created by EnergyManager
+	*
+	* @var events
+	* @access private
+	*/
+	private $events = array();
 	
 	/**
 	* instance id of the archive control (usually located in IPS\core)
@@ -156,6 +164,7 @@ class EnergyManager{
 	* @access public
 	*/
 	public function __construct($configId, $parentId, $archiveId, $price_per_kwh, $update_interval, $prefix = "EM_", $debug = false){
+		echo $update_interval;
 		$this->configId = $configId;
 		$this->parentId = $parentId;
 		$this->archiveId = $archiveId;
