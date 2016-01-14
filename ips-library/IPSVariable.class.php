@@ -217,6 +217,7 @@ class IPSVariable{
 		$this->id = $instanceId;
 		$this->name = $obj["ObjectName"];
 		$this->parent = $obj["ParentID"];
+		$this->aggregationType = 0;
 		
 		$var = IPS_GetVariable($this->id);
 		if($profile->getName() != $var["VariableProfile"]){
