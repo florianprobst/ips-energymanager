@@ -21,6 +21,7 @@ require_once 'ips-library/IPSVariableProfile.class.php';
 require_once 'ips-library/IPSScript.class.php';
 require_once 'ips-library/IPSTimerEvent.class.php';
 require_once 'Devices/IDevice.interface.php';
+require_once 'Devices/WashingMachine.class.php';
 
 /**
 * class EnergyManager
@@ -37,12 +38,28 @@ class EnergyManager{
 	private $configId;
 	
 	/**
+	* webfront id
+	*
+	* @var integer
+	* @access private
+	*/
+	private $webfrontId;
+	
+	/**
 	* array of managed power meter devices and their variables
 	*
 	* @var IPowerMeter
 	* @access private
 	*/
 	private $powermeters = array();
+	
+	/**
+	* array of managed devices
+	*
+	* @var IDevice
+	* @access private
+	*/
+	private $devices = array();
 
 	/**
 	* parent object id for all variables created by this script
@@ -152,6 +169,14 @@ class EnergyManager{
 	* @access private
 	*/
 	const tSTRING = 3;
+	
+	//Farbcodes, von "schlecht" nach "gut"
+	const hColor1			= 0xFF0000;						//rot (schlecht)
+	const hColor2			= 0xFF9D00;						//orange
+	const hColor3			= 0xFFF700;						//gelb
+	const hColor4			= 0x9DFF00;						//hellgrün
+	const hColor5			= 0x46F700;						//grün
+	const hColor6			= 0x46F700;						//grün
 
 	/**
 	* Constructor
@@ -163,9 +188,10 @@ class EnergyManager{
 	* @param boolean $debug enables / disables debug information
 	* @access public
 	*/
-	public function __construct($configId, $parentId, $archiveId, $price_per_kwh, $update_interval, $prefix = "EM_", $debug = false){
+	public function __construct($configId, $webfrontId, $parentId, $archiveId, $price_per_kwh, $update_interval, $prefix = "EM_", $debug = false){
 		echo $update_interval;
 		$this->configId = $configId;
+		$this->webfrontId = $webfrontId;
 		$this->parentId = $parentId;
 		$this->archiveId = $archiveId;
 		$this->update_interval = $update_interval;
@@ -176,16 +202,25 @@ class EnergyManager{
 		//create variable profiles
 		array_push($this->variableProfiles, new IPSVariableProfile($this->prefix . "Watthours", self::tFLOAT, "", " Wh", NULL, $this->debug));
 		array_push($this->variableProfiles, new IPSVariableProfile("~HTMLBox", self::tFLOAT, "", "", NULL, $this->debug));
+		$assoc[0] = ["val"=>0,	"name"=>"n.A.",	"icon" => "", "color" => self::hColor2];
+		$assoc[1] = ["val"=>1,	"name"=>"An",	"icon" => "", "color" => self::hColor5];
+		$assoc[2] = ["val"=>2,	"name"=>"Standby",	"icon" => "", "color" => self::hColor3];
+		$assoc[3] = ["val"=>3,	"name"=>"Aus",	"icon" => "", "color" => self::hColor1];
+		array_push($this->variableProfiles, new IPSVariableProfile($this->prefix . "Device_State", self::tINT, "", "", $assoc, $this->debug));
+		unset($assoc);
 		$this->statistics = new IPSVariable($this->prefix . "Statistics", self::tSTRING, $this->parentId, $this->variableProfiles[1], false, NULL, 0, $this->debug);
 		
 		//create scripts
 		//script contents
 		$script_includes = '<?require_once(IPS_GetScript('. $this->configId . ')["ScriptFile"]);';
 		$script_update_status = $script_includes . '$energymanager->update();?>';
+		$script_check_devices = $script_includes . '$energymanager->checkdevices();?>';
 		array_push($this->scripts, new IPSScript($this->parentId, $this->prefix . "update_status", $script_update_status, $this->debug));
+		array_push($this->scripts, new IPSScript($this->parentId, $this->prefix . "check_devices", $script_check_devices, $this->debug));
 		
 		//create events
 		array_push($this->events, new IPSTimerEvent($this->getScriptByName("update_status")->getInstanceId(), $this->prefix ."check_update_status", $this->update_interval, $this->debug));
+		array_push($this->events, new IPSTimerEvent($this->getScriptByName("check_devices")->getInstanceId(), $this->prefix ."check_devices_status", 30, $this->debug));
 	}
 	
 	/**
@@ -227,6 +262,76 @@ class EnergyManager{
 	}
 	
 	/**
+	* registerWashingMachine
+	*
+	* @return boolean true if register was successful
+	* @access public
+	*/
+	public function registerWashingMachine($name, $powermeterId, $standbylevel, $poweronlevel, $manufacturer, $model){
+		$powermeter = $this->getPowerMeterById($powermeterId);
+		
+		$tmp = array(
+			"device" => new WashingMachine($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer, $model),
+			"state" => new IPSVariable($this->prefix . "State_" . $name . "_" . $powermeterId, self::tINT, $this->parentId, $this->variableProfiles[2], false, NULL, 0, $this->debug)
+		);
+			
+		//add new device to list
+		array_push($this->devices, $tmp);
+		unset($tmp);
+		
+		//create variable holding the state of the washing mashine
+		$this->state = new IPSVariable($this->prefix . "Statistics", self::tSTRING, $this->parentId, $this->variableProfiles[1], false, NULL, 0, $this->debug);
+		
+		return true;
+	}
+	
+	/**
+	* checkdevices
+	*
+	*
+	*/
+	public function checkdevices(){
+		foreach($this->devices as $d){
+			$state = $d["device"]->getState();
+			//push notifications should not be send from here. but for now i'm fine with it:
+			$oldstate = $d["state"]->getValue();
+			$d["state"]->setValue($state);
+			if($oldstate != $state){
+				$msg = $d["device"]->getName();
+				if($state == WashingMashine::DEVICE_ON)
+					$msg .= " läuft jetzt";
+				if($state == WashingMashine::DEVICE_STANDBY)
+					$msg .= " ist fertig";
+				if($state == WashingMashine::DEVICE_OFF)
+					$msg .= " ist nun ausgeschaltet";
+				WFC_PushNotification(16219 /*[Probst.Haus]*/, 'EnergyManager', $msg, 'buzzer', 0);
+
+				/*
+				alarm
+				bell
+				boom
+				buzzer
+				connected
+				dark
+				digital
+				drums
+				duck
+				full
+				happy
+				horn
+				inception
+				kazoo
+				roll
+				siren
+				space
+				trickling
+				turn
+				*/
+			}
+		}
+	}
+	
+	/**
 	* returns all power meters registered with this class
 	*
 	* @return array containing all power meters
@@ -234,6 +339,20 @@ class EnergyManager{
 	*/
 	public function getPowerMeters(){
 		return $this->powermeters;
+	}
+	
+	/**
+	* get PowerMeter by id
+	*
+	* @return IPowerMeter powermeter device
+	* @access private
+	*/
+	private function getPowerMeterById($instanceId){
+		foreach ($this->powermeters as &$p) {
+		 	if($p["device"]->getInstanceId() == $instanceId){
+		 		return $p["device"];
+			}
+		} 
 	}
 	
 	/**

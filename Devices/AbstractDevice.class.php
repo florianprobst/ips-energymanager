@@ -15,6 +15,7 @@
  */
 
 require_once 'IDevice.interface.php';
+//require_once 'PowerMeters/IPowerMeter.interface.php';
 
 /**
 * abstract class AbstractPowerMeter
@@ -22,14 +23,12 @@ require_once 'IDevice.interface.php';
 * @uses IPowerMeter as interface
 */
 abstract class AbstractDevice implements IDevice{
-	
 	/**
-  * IP-Symcon instance id of the power meter device
-  *
-  * @var int
-  * @access protected
-  */
-	protected $instanceId;
+	* powermeter attached to this device
+	*
+	* @var IPowerMeter
+	* @access private
+	*/
 	
 	/**
   * power meter name
@@ -40,7 +39,7 @@ abstract class AbstractDevice implements IDevice{
 	protected $name;
 	
 	/**
-  * power meter device manufacturer
+  * device manufacturer
   *
   * @var string
   * @access private
@@ -54,6 +53,26 @@ abstract class AbstractDevice implements IDevice{
   * @access private
   */
 	private $model;
+	
+	/**
+  * stand by level
+  *
+  * level of watts which define the device being in stand by
+  *
+  * @var int
+  * @access private
+  */
+	private $standbylevel;
+	
+	/**
+  * power on level
+  *
+  * level of watts which define the device being in switched on
+  *
+  * @var int
+  * @access private
+  */
+	private $poweronlevel;
 	
 	/**
 	* unknown device manufacturer
@@ -70,6 +89,27 @@ abstract class AbstractDevice implements IDevice{
 	const UNKNOWN_MODEL = "UNKNOWN";
 	
 	/**
+	* device is 'on' constant
+	* @const DEVICE_ON
+	* @access public
+	*/
+	const DEVICE_ON = 1;
+	
+	/**
+	* device is 'standby' constant
+	* @const DEVICE_STANDBY
+	* @access public
+	*/
+	const DEVICE_STANDBY = 2;
+	
+	/**
+	* device is 'off' constant
+	* @const DEVICE_OFF
+	* @access public
+	*/
+	const DEVICE_OFF = 3;
+	
+	/**
 	* Constructor
 	* 
 	* @param int $instanceId IP-Symcon instance id of the power meter device
@@ -77,10 +117,12 @@ abstract class AbstractDevice implements IDevice{
 	* @return AbstractPowerMeter|null the object or null if an error occured
 	* @access public
 	*/
-	public function __construct($instanceId, $name, $manufacturer = self::UNKNOWN_MANUFACTURER, $model = self::UNKNOWN_MODEL){
-		if(!is_int($instanceId))
-			throw new Exception("Parameter \$instanceId is not of type 'integer'.");
-		$this->instanceId = $instanceId;
+	public function __construct($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer = self::UNKNOWN_MANUFACTURER, $model = self::UNKNOWN_MODEL){
+		if(!($powermeter instanceof IPowerMeter))
+			throw new Exception("Parameter \$powermeter is not of type IPowerMeter");
+		$this->powermeter = $powermeter;
+		$this->standbylevel = $standbylevel;
+		$this->poweronlevel = $poweronlevel;
 		$this->name = $name;
 		$this->setDeviceManufacturer($manufacturer);
 		$this->setDeviceModel($model);
@@ -109,19 +151,13 @@ abstract class AbstractDevice implements IDevice{
 	/**
 	* getCurrentWatts
 	* 
-	* @return integer current watts consumed at the power meter
+	* @return integer current watts consumed at the devices power meter
 	* @access public
 	*/
-	abstract public function getCurrentWatts();
-	
-	/**
-	* getEnergyCounterWattHours
-	* 
-	* @return float energy counter in watt-hours
-	* @access public
-	*/
-	abstract public function getEnergyCounterWattHours();
-	
+	public function getCurrentWatts(){
+		return $this->powermeter->getCurrentWatts();
+	}
+
 	/**
 	* getDeviceManufacturer
 	* 
@@ -162,21 +198,63 @@ abstract class AbstractDevice implements IDevice{
 	public function setDeviceModel($model){
 		$this->model = $model;
 	}
-	
+
 	/**
-	* getEnergyCounterInstanceId
+	* getState
 	* 
-	* @return integer instance id of the energy counter variable
+	* @return int state of the device DEVICE_ON, DEVICE_STANDBY, DEVICE_OFF
 	* @access public
 	*/
-	abstract function getEnergyCounterInstanceId();
+	public function getState(){
+		$consumption = $this->getCurrentWatts();
+		if($consumption >= $this->getPowerOnLevel()){
+			return self::DEVICE_ON;
+		}elseif($consumption >= $this->getStandbyLevel()){
+			return self::DEVICE_STANDBY;
+		}elseif($consumption < $this->getStandbyLevel()){
+			return self::DEVICE_OFF;
+		}
+	}
 	
 	/**
-	* getCurrentConsumptionInstanceId
+	* getStandbyLevel
 	* 
-	* @return integer instance id of the current consumption variable
+	* @return integer the consumer device consumption level while in standby
 	* @access public
 	*/
-	abstract function getCurrentConsumptionInstanceId();
+	public function getStandbyLevel(){
+		return $this->standbylevel;
+	}
+	
+	/**
+	* getPowerOnLevel
+	* 
+	* @return integer the minimum consumer device consumption level to state it as powered on
+	* @access public
+	*/
+	public function getPowerOnLevel(){
+		return $this->poweronlevel;
+	}
+	
+	/**
+	* setStandbyLevel
+	* 
+	* @param integer the consumer device consumption level while in standby
+	* @access public
+	*/
+	public function setStandbyLevel($watthours){
+		$this->standbylevel = $watthours;
+	}
+	
+	/**
+	* setPowerOnLevel
+	* 
+	* @param integer the minimum consumer device consumption level to state it as powered on
+	* @access public
+	*/
+	public function setPowerOnLevel($watthours){
+		$this->poweronlevel = $watthours;
+	}
+
 }
 ?>

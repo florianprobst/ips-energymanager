@@ -55,7 +55,7 @@ interface IDevice{
 	* @return integer the minimum consumer device consumption level to state it as powered on
 	* @access public
 	*/
-	public function getOnLevel();
+	public function getPowerOnLevel();
 	
 	/**
 	* setStandbyLevel
@@ -71,7 +71,15 @@ interface IDevice{
 	* @param integer the minimum consumer device consumption level to state it as powered on
 	* @access public
 	*/
-	public function setOnLevel($watthours);
+	public function setPowerOnLevel($watthours);
+	
+	/**
+	* getCurrentWatts
+	* 
+	* @return integer current watts consumed
+	* @access public
+	*/
+	public function getCurrentWatts();
 	
 	/*
 	public function getOnCyclesCurrentYear();
