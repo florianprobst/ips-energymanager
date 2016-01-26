@@ -24,8 +24,6 @@ class Device extends AbstractDevice{
 	public function __construct($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer = self::UNKNOWN_MANUFACTURER, $model = self::UNKNOWN_MODEL){
 		parent::__construct($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer, $model);
 		
-		
-		echo "im in the washing machine dafuq";
 		//we need the following shit:
 		//events checking the state of the washing machine.
 		//a variable holding the running state of the washing machine
