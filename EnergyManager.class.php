@@ -21,7 +21,7 @@ require_once 'ips-library/IPSVariableProfile.class.php';
 require_once 'ips-library/IPSScript.class.php';
 require_once 'ips-library/IPSTimerEvent.class.php';
 require_once 'Devices/IDevice.interface.php';
-require_once 'Devices/WashingMachine.class.php';
+require_once 'Devices/Device.class.php';
 
 /**
 * class EnergyManager
@@ -189,7 +189,6 @@ class EnergyManager{
 	* @access public
 	*/
 	public function __construct($configId, $webfrontId, $parentId, $archiveId, $price_per_kwh, $update_interval, $prefix = "EM_", $debug = false){
-		echo $update_interval;
 		$this->configId = $configId;
 		$this->webfrontId = $webfrontId;
 		$this->parentId = $parentId;
@@ -262,16 +261,16 @@ class EnergyManager{
 	}
 	
 	/**
-	* registerWashingMachine
+	* registerDevice
 	*
 	* @return boolean true if register was successful
 	* @access public
 	*/
-	public function registerWashingMachine($name, $powermeterId, $standbylevel, $poweronlevel, $manufacturer, $model){
+	public function registerDevice($name, $powermeterId, $standbylevel, $poweronlevel, $manufacturer, $model){
 		$powermeter = $this->getPowerMeterById($powermeterId);
 		
 		$tmp = array(
-			"device" => new WashingMachine($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer, $model),
+			"device" => new Device($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer, $model),
 			"state" => new IPSVariable($this->prefix . "State_" . $name . "_" . $powermeterId, self::tINT, $this->parentId, $this->variableProfiles[2], false, NULL, 0, $this->debug)
 		);
 			
@@ -298,11 +297,11 @@ class EnergyManager{
 			$d["state"]->setValue($state);
 			if($oldstate != $state){
 				$msg = $d["device"]->getName();
-				if($state == WashingMashine::DEVICE_ON)
+				if($state == Device::DEVICE_ON)
 					$msg .= " läuft jetzt";
-				if($state == WashingMashine::DEVICE_STANDBY)
+				if($state == Device::DEVICE_STANDBY)
 					$msg .= " ist fertig";
-				if($state == WashingMashine::DEVICE_OFF)
+				if($state == Device::DEVICE_OFF)
 					$msg .= " ist nun ausgeschaltet";
 				WFC_PushNotification(16219 /*[Probst.Haus]*/, 'EnergyManager', $msg, 'buzzer', 0);
 
