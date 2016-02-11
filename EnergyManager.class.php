@@ -271,16 +271,14 @@ class EnergyManager{
 		
 		$tmp = array(
 			"device" => new Device($name, $powermeter, $standbylevel, $poweronlevel, $manufacturer, $model),
-			"state" => new IPSVariable($this->prefix . "State_" . $name . "_" . $powermeterId, self::tINT, $this->parentId, $this->variableProfiles[2], false, NULL, 0, $this->debug)
+			"state" => new IPSVariable($this->prefix . "State_" . $name . "_" . $powermeterId, self::tINT, $this->parentId, $this->variableProfiles[2], false, NULL, 0, $this->debug),
+			"pstate" => new IPSVariable($this->prefix . "PState_" . $name . "_" . $powermeterId, self::tINT, $this->parentId, null, false, NULL, 0, $this->debug)
 		);
 			
 		//add new device to list
 		array_push($this->devices, $tmp);
 		unset($tmp);
-		
-		//create variable holding the state of the washing mashine
-		$this->state = new IPSVariable($this->prefix . "Statistics", self::tSTRING, $this->parentId, $this->variableProfiles[1], false, NULL, 0, $this->debug);
-		
+				
 		return true;
 	}
 	
@@ -292,9 +290,39 @@ class EnergyManager{
 	public function checkdevices(){
 		foreach($this->devices as $d){
 			$state = $d["device"]->getState();
-			//push notifications should not be send from here. but for now i'm fine with it:
 			$oldstate = $d["state"]->getValue();
-			$d["state"]->setValue($state);
+			$pstate = $d["pstate"]->getValue();
+			
+			//if pstate <= 0 switch to off, if pstate >= 3 switch to on
+			$poff = 0;
+			$pon = 3;
+			
+			if($state == Device::DEVICE_ON){
+				$pstate++;
+				$d["pstate"]->setValue($pstate);
+				if($pstate > $pon){
+					$pstate = $pon;
+					$d["pstate"]->setValue($pstate);
+					if($oldstate != Device::DEVICE_ON){
+						$d["state"]->setValue(Device::DEVICE_ON);
+						WFC_PushNotification(16219 /* WebFront */, 'EnergyManager', $d["device"]->getName() . " läuft jetzt", 'buzzer', 0);
+					}
+				}
+			}else if($state == Device::DEVICE_OFF){
+				$pstate--;
+				$d["pstate"]->setValue($pstate);
+				if($pstate < $poff){
+					$pstate = $poff;
+					$d["pstate"]->setValue($pstate);
+					if($oldstate != Device::DEVICE_OFF){
+						$d["state"]->setValue(Device::DEVICE_OFF);
+						WFC_PushNotification(16219 /* WebFront */, 'EnergyManager', $d["device"]->getName() . " ist nun ausgeschaltet", 'buzzer', 0);
+					}
+				}
+			}
+			
+			/*
+			$d["state"]->setValue($dstate);
 			if($oldstate != $state){
 				$msg = $d["device"]->getName();
 				if($state == Device::DEVICE_ON)
@@ -303,8 +331,8 @@ class EnergyManager{
 					$msg .= " ist fertig";
 				if($state == Device::DEVICE_OFF)
 					$msg .= " ist nun ausgeschaltet";
-				WFC_PushNotification(16219 /*[Probst.Haus]*/, 'EnergyManager', $msg, 'buzzer', 0);
-
+				WFC_PushNotification(16219, 'EnergyManager', $msg, 'buzzer', 0);
+				*/
 				/*
 				alarm
 				bell
@@ -326,7 +354,7 @@ class EnergyManager{
 				trickling
 				turn
 				*/
-			}
+			//}
 		}
 	}
 	

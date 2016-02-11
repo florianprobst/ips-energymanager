@@ -97,6 +97,7 @@ abstract class AbstractDevice implements IDevice{
 	
 	/**
 	* device is 'standby' constant
+	*
 	* @const DEVICE_STANDBY
 	* @access public
 	*/
@@ -108,6 +109,26 @@ abstract class AbstractDevice implements IDevice{
 	* @access public
 	*/
 	const DEVICE_OFF = 3;
+	
+	/**
+	* device 'on/off pending 1' constant
+	*
+	* we need to verify that the device is "on" over a certain time. there are fluctuations while running
+	* which could trigger a short "0 watt consumption" which would throw a "device off" state we don't want.
+	* To prevent this we got on and off pending constants numbered 1-5
+	* @const DEVICE_PENDING_OFF/ON_1-5
+	* @access public
+	*/
+	const DEVICE_PENDING_ON_1 = 11;
+	const DEVICE_PENDING_ON_2 = 12;
+	const DEVICE_PENDING_ON_3 = 13;
+	const DEVICE_PENDING_ON_4 = 14;
+	const DEVICE_PENDING_ON_5 = 15;
+	const DEVICE_PENDING_OFF_1 = 21;
+	const DEVICE_PENDING_OFF_2 = 22;
+	const DEVICE_PENDING_OFF_3 = 23;
+	const DEVICE_PENDING_OFF_4 = 24;
+	const DEVICE_PENDING_OFF_5 = 25;
 	
 	/**
 	* Constructor
