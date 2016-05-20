@@ -33,6 +33,7 @@ Sofern in der Config nicht anderweitig angegeben lautet dieses standardmässig `
 1. Dieses Repository im IP-Symcon Unterordner `webfront/user/` klonen. Bsp.: `C:\IP-Symcon\webfront\user\ips-energymanager` oder alternativ als zip-Datei herunterladen und in den `IP-Symcon/webfront/user` Unterordner entpacken.
 2. In der IP-Symcon Verwaltungskonsole eine Kategorie `EnergyManager` und eine Unterkategorie `Variables` erstellen (Namen und Ablageorte sind frei wählbar)
 3. Unterhalb der Kategorie `EnergyManager` ist das Config-Skript manuell anzulegen. Das anzulegendende Skript befinden sich im Unterordner `assets` und kann per copy&paste in die IPS-Console eingetragen werden. Alternativ ist das Skript auch weiter unten direkt beschrieben und kann von dort kopiert werden.
+4. Wenn gewünscht, sendet das Skript für überwachte Geräte PUSH-Benachrichtigungen auf dein Handy um beispielsweise zu informieren ob die Waschmaschine noch läuft. Damit das funktioniert muss in Symcon die Notification Control eingerichtet werden. Wie das funktioniert kann hier nachgelesen werden [Notification Control einrichten](https://www.symcon.de/service/dokumentation/modulreferenz/notification-control/).
 
 #### Struktur in der IP-Symcon Console nach Installation
 (siehe dazu auch Screenshot unten)
@@ -97,5 +98,6 @@ Die Zählerstände sind aus zwei Gründen separat in Skripteigenen Variablen ges
 * Wie im Fall des HomeMatic Zählers wird der Zählerstand des Gerätes bei einem Stromausfall auf 0 zurück gesetzt. Durch die separate Speicherung in eigenen Variablen kann das vermieden werden.
 
 ##Screenshots
-![auswertung](assets/screenshot_v091_em_statistics.png)
-![ips variables](assets/screenshot_v091_em_console_structure.png)
+![auswertung](assets/screenshot_v092_em_statistics.jpg)
+![ips variables](assets/screenshot_v092_em_console_structure.jpg)
+![notifications instance](assets/screenshot_notifications_instanceid.jpg)
