@@ -99,5 +99,5 @@ Die Zählerstände sind aus zwei Gründen separat in Skripteigenen Variablen ges
 
 ##Screenshots
 ![auswertung](assets/screenshot_v092_em_statistics.jpg)
-![ips variables](assets/screenshot_v092_em_console_structure.jpg)
+![ips variables](assets/screenshot_v092_em_console_structure.JPG)
 ![notifications instance](assets/screenshot_notifications_instanceid.jpg)
